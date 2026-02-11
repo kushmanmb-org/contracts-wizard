@@ -3,13 +3,14 @@ import type { GenericOptions } from './build-generic';
 import type { Contract } from './contract';
 import { printContract } from './print';
 import SOLIDITY_VERSION from './solidity-version.json';
+import SOLIDITY_PRAGMA_VERSION from './solidity-pragma-version.json';
 import contracts from '../openzeppelin-contracts';
 import type { Lines } from './utils/format-lines';
 import { formatLinesWithSpaces, spaceBetween } from './utils/format-lines';
 import type { Upgradeable } from './set-upgradeable';
 
 function getHeader(c: Contract) {
-  return [`// SPDX-License-Identifier: ${c.license}`, `pragma solidity ^${SOLIDITY_VERSION};`];
+  return [`// SPDX-License-Identifier: ${c.license}`, `pragma solidity ^${SOLIDITY_PRAGMA_VERSION};`];
 }
 
 function shouldUseUnsafeAllowConstructor(c: Contract): boolean {
