@@ -38,6 +38,14 @@
         emergency response.
       </HelpTooltip>
     </label>
+
+    <label class:checked={opts.addressVerification}>
+      <input type="checkbox" bind:checked={opts.addressVerification} />
+      Address Verification
+      <HelpTooltip>
+        Adds functionality to verify address ownership using cryptographic signatures. Users can prove they control an address by signing a message with their private key, without exposing the private key. Useful for KYC, whitelisting, and identity verification.
+      </HelpTooltip>
+    </label>
   </div>
 </section>
 
