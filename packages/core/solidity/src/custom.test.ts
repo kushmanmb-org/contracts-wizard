@@ -66,6 +66,27 @@ testCustom('access control managed', {
   access: 'managed',
 });
 
+testCustom('address verification', {
+  addressVerification: true,
+});
+
+testCustom('address verification with access control', {
+  addressVerification: true,
+  access: 'ownable',
+});
+
+testCustom('address verification with roles', {
+  addressVerification: true,
+  access: 'roles',
+});
+
+testCustom('full featured with address verification', {
+  pausable: true,
+  addressVerification: true,
+  access: 'roles',
+  upgradeable: 'uups',
+});
+
 testCustom('upgradeable uups with access control disabled', {
   // API should override access to true since it is required for UUPS
   access: false,
