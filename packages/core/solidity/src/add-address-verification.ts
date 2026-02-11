@@ -43,7 +43,8 @@ export function addAddressVerification(c: ContractBuilder, access: Access): void
   // Add mapping to track verified addresses
   // Use namespaced storage for upgradeable contracts, regular state variable otherwise
   if (c.upgradeable) {
-    setNamespacedStorage(c, ['mapping(address account => bool verified) _verifiedAddresses'], 'openzeppelin.storage');
+    // Use empty prefix to create namespace based on contract name (ERC-7201 compliant)
+    setNamespacedStorage(c, ['mapping(address account => bool verified) _verifiedAddresses'], '');
   } else {
     c.addStateVariable(
       'mapping(address => bool) private _verifiedAddresses;',
@@ -86,8 +87,8 @@ function addVerifyAddressOwnershipFunction(c: ContractBuilder) {
       '// Recover the signer address from the signature',
       'address recoveredAddress = ECDSA.recover(ethSignedMessageHash, signature);',
       '',
-      '// Check if the recovered address matches the sender',
-      'if (recoveredAddress != msg.sender) {',
+      '// Check if the recovered address is valid and matches the sender',
+      'if (recoveredAddress == address(0) || recoveredAddress != msg.sender) {',
       '    revert InvalidSignature();',
       '}',
       '',
