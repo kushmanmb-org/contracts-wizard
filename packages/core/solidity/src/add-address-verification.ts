@@ -1,6 +1,7 @@
 import type { ContractBuilder } from './contract';
 import { Access, requireAccessControl } from './set-access-control';
 import { defineFunctions } from './utils/define-functions';
+import { setNamespacedStorage, toStorageStructInstantiation } from './set-namespaced-storage';
 
 export function addAddressVerification(c: ContractBuilder, access: Access): void {
   // Add ECDSA library for signature verification
@@ -15,46 +16,113 @@ export function addAddressVerification(c: ContractBuilder, access: Access): void
     path: '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol',
   });
 
-  // Add mapping to track verified addresses
-  c.addVariable(`
-    // Mapping to track addresses that have been verified
-    mapping(address => bool) private _verifiedAddresses;
-  `);
-
   // Add event for address verification
-  c.addVariable(`
-    // Event emitted when an address is verified
-    event AddressVerified(address indexed account);
-  `);
+  c.addConstantOrImmutableOrErrorDefinition(
+    'event AddressVerified(address indexed account);',
+    ['/// @dev Emitted when an address is verified']
+  );
 
   // Add event for address revocation
-  c.addVariable(`
-    // Event emitted when address verification is revoked
-    event VerificationRevoked(address indexed account);
-  `);
+  c.addConstantOrImmutableOrErrorDefinition(
+    'event VerificationRevoked(address indexed account);',
+    ['/// @dev Emitted when address verification is revoked']
+  );
 
   // Add custom error for invalid signatures
-  c.addVariable(`
-    // Error thrown when signature verification fails
-    error InvalidSignature();
-  `);
+  c.addConstantOrImmutableOrErrorDefinition(
+    'error InvalidSignature();',
+    ['/// @dev Error thrown when signature verification fails']
+  );
 
   // Add custom error for already verified addresses
-  c.addVariable(`
-    // Error thrown when address is already verified
-    error AlreadyVerified();
-  `);
+  c.addConstantOrImmutableOrErrorDefinition(
+    'error AlreadyVerified();',
+    ['/// @dev Error thrown when address is already verified']
+  );
+
+  // Add mapping to track verified addresses
+  // Use namespaced storage for upgradeable contracts, regular state variable otherwise
+  if (c.upgradeable) {
+    setNamespacedStorage(c, ['mapping(address account => bool verified) _verifiedAddresses'], 'openzeppelin.storage');
+  } else {
+    c.addStateVariable(
+      'mapping(address => bool) private _verifiedAddresses;',
+      false
+    );
+  }
 
   // Add view function to check if an address is verified
-  c.addFunction(functions.isAddressVerified);
+  addIsAddressVerifiedFunction(c);
 
   // Add function to verify address ownership with signature
-  c.addFunction(functions.verifyAddressOwnership);
+  addVerifyAddressOwnershipFunction(c);
 
   // Add function to revoke verification (only for access controlled contracts)
   if (access) {
-    requireAccessControl(c, functions.revokeAddressVerification, access, 'DEFAULT_ADMIN_ROLE');
+    addRevokeAddressVerificationFunction(c, access);
   }
+}
+
+function addIsAddressVerifiedFunction(c: ContractBuilder) {
+  const storageAccess = c.upgradeable ? `${toStorageStructInstantiation(c.name)}\n` : '';
+  const verifiedAddressesAccess = c.upgradeable ? '$._verifiedAddresses[account]' : '_verifiedAddresses[account]';
+  
+  c.addFunctionCode(
+    `${storageAccess}return ${verifiedAddressesAccess};`,
+    functions.isAddressVerified
+  );
+}
+
+function addVerifyAddressOwnershipFunction(c: ContractBuilder) {
+  const storageAccess = c.upgradeable ? `${toStorageStructInstantiation(c.name)}\n` : '';
+  const verifiedAddressesRef = c.upgradeable ? '$._verifiedAddresses' : '_verifiedAddresses';
+  
+  c.addFunctionCode(
+    [
+      storageAccess.trimEnd(),
+      '// Hash the message according to EIP-191',
+      'bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(message);',
+      '',
+      '// Recover the signer address from the signature',
+      'address recoveredAddress = ECDSA.recover(ethSignedMessageHash, signature);',
+      '',
+      '// Check if the recovered address matches the sender',
+      'if (recoveredAddress != msg.sender) {',
+      '    revert InvalidSignature();',
+      '}',
+      '',
+      '// Check if already verified',
+      `if (${verifiedAddressesRef}[msg.sender]) {`,
+      '    revert AlreadyVerified();',
+      '}',
+      '',
+      '// Mark the address as verified',
+      `${verifiedAddressesRef}[msg.sender] = true;`,
+      '',
+      '// Emit verification event',
+      'emit AddressVerified(msg.sender);',
+    ].filter(line => line !== '').join('\n'),
+    functions.verifyAddressOwnership
+  );
+}
+
+function addRevokeAddressVerificationFunction(c: ContractBuilder, access: Access) {
+  requireAccessControl(c, functions.revokeAddressVerification, access, 'DEFAULT_ADMIN_ROLE');
+  
+  const storageAccess = c.upgradeable ? `${toStorageStructInstantiation(c.name)}\n` : '';
+  const verifiedAddressesRef = c.upgradeable ? '$._verifiedAddresses' : '_verifiedAddresses';
+  
+  c.addFunctionCode(
+    [
+      storageAccess.trimEnd(),
+      '// Revoke verification',
+      `${verifiedAddressesRef}[account] = false;`,
+      '',
+      '// Emit revocation event',
+      'emit VerificationRevoked(account);',
+    ].filter(line => line !== '').join('\n'),
+    functions.revokeAddressVerification
+  );
 }
 
 const functions = defineFunctions({
@@ -62,9 +130,7 @@ const functions = defineFunctions({
     kind: 'public' as const,
     args: [{ name: 'account', type: 'address' }],
     returns: ['bool'],
-    code: [
-      'return _verifiedAddresses[account];',
-    ],
+    mutability: 'view' as const,
     docs: {
       notice: 'Check if an address has been verified',
       params: {
@@ -82,29 +148,6 @@ const functions = defineFunctions({
       { name: 'message', type: 'bytes32' },
       { name: 'signature', type: 'bytes' },
     ],
-    code: [
-      '// Hash the message according to EIP-191',
-      'bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(message);',
-      '',
-      '// Recover the signer address from the signature',
-      'address recoveredAddress = ECDSA.recover(ethSignedMessageHash, signature);',
-      '',
-      '// Check if the recovered address matches the sender',
-      'if (recoveredAddress != msg.sender) {',
-      '    revert InvalidSignature();',
-      '}',
-      '',
-      '// Check if already verified',
-      'if (_verifiedAddresses[msg.sender]) {',
-      '    revert AlreadyVerified();',
-      '}',
-      '',
-      '// Mark the address as verified',
-      '_verifiedAddresses[msg.sender] = true;',
-      '',
-      '// Emit verification event',
-      'emit AddressVerified(msg.sender);',
-    ],
     docs: {
       notice: 'Verify address ownership by providing a signature',
       details: 'The caller must provide a signature of a message signed with their private key. The signature is verified to ensure the caller controls the private key associated with their address. This allows verification of address ownership without exposing the private key.',
@@ -118,13 +161,6 @@ const functions = defineFunctions({
   revokeAddressVerification: {
     kind: 'public' as const,
     args: [{ name: 'account', type: 'address' }],
-    code: [
-      '// Revoke verification',
-      '_verifiedAddresses[account] = false;',
-      '',
-      '// Emit revocation event',
-      'emit VerificationRevoked(account);',
-    ],
     docs: {
       notice: 'Revoke address verification (admin only)',
       params: {
