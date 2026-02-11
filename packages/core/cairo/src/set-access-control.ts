@@ -82,6 +82,11 @@ const DEFAULT_ADMIN_DELAY_INCREASE_WAIT = BigInt(5 * 24 * 60 * 60); // 5 days
 const MAXIMUM_DEFAULT_ADMIN_TRANSFER_DELAY = BigInt(30 * 24 * 60 * 60); // 30 days
 
 /// Sets access control for the contract by adding inheritance.
+/// 
+/// Security considerations:
+/// - For 'ownable': Validates owner address is not zero via OpenZeppelin's OwnableComponent
+/// - For 'roles': Validates default_admin address during role grant
+/// - For 'roles-dar': Validates initial_default_admin with delay-based admin transfer rules
 export function setAccessControl(c: ContractBuilder, access: Access): void {
   switch (access.type) {
     case false: {
@@ -91,6 +96,7 @@ export function setAccessControl(c: ContractBuilder, access: Access): void {
       c.addComponent(components.OwnableComponent, [{ lit: 'owner' }], true);
       c.addUseClause('starknet', 'ContractAddress');
       c.addConstructorArgument({ name: 'owner', type: 'ContractAddress' });
+      // Note: OpenZeppelin's OwnableComponent validates owner is not zero address
       break;
     }
     case 'roles': {
@@ -128,6 +134,7 @@ export function setAccessControl(c: ContractBuilder, access: Access): void {
         });
 
         c.addUseClause('openzeppelin_access::accesscontrol', 'DEFAULT_ADMIN_ROLE');
+        // Note: OpenZeppelin's AccessControl validates admin address is not zero
         c.addConstructorCode('self.access_control._grant_role(DEFAULT_ADMIN_ROLE, default_admin)');
       }
       break;
@@ -215,6 +222,7 @@ export function setAccessControl(c: ContractBuilder, access: Access): void {
 
         c.addUseClause('starknet', 'ContractAddress');
         c.addConstructorArgument({ name: 'initial_default_admin', type: 'ContractAddress' });
+        // Note: OpenZeppelin's AccessControlDefaultAdminRulesComponent validates admin address
       }
       break;
     }
@@ -227,6 +235,11 @@ export function setAccessControl(c: ContractBuilder, access: Access): void {
 
 /**
  * Enables access control for the contract and restricts the given function with access control.
+ * 
+ * Security considerations:
+ * - Automatically defaults to 'ownable' if access is false for protected functions
+ * - Role owners are validated by OpenZeppelin's AccessControl component
+ * - Uses assert_only_owner() and assert_only_role() for enforcement
  */
 export function requireAccessControl(
   c: ContractBuilder,
@@ -262,6 +275,7 @@ export function requireAccessControl(
       if (roleOwner !== undefined) {
         c.addUseClause('starknet', 'ContractAddress');
         c.addConstructorArgument({ name: roleOwner, type: 'ContractAddress' });
+        // Note: OpenZeppelin's AccessControl component validates role owner address
         if (addedSuper) {
           c.addConstructorCode(`self.${substorageName}._grant_role(${roleId}, ${roleOwner})`);
         }

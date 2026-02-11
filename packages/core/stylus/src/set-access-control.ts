@@ -7,12 +7,20 @@ export type Access = (typeof accessOptions)[number];
 
 /**
  * Sets access control for the contract via constructor args.
+ * 
+ * ⚠️ WARNING: INCOMPLETE IMPLEMENTATION
+ * The Stylus access control implementation is currently non-functional.
+ * All code below is commented out pending availability of openzeppelin_stylus crate.
+ * 
+ * TODO: Either implement proper access control or remove from UI options.
+ * See: https://github.com/OpenZeppelin/rust-contracts-stylus
  */
 export function setAccessControl(_c: ContractBuilder, access: Access): void {
   switch (access) {
     case false:
       break;
     case 'ownable': {
+      // TODO: Uncomment when openzeppelin_stylus crate is available and stable
       // if (!c.traitExists('Ownable')) {
       //   c.addUseClause('openzeppelin_stylus::access::ownable', 'Ownable');
       //   c.addImplementedTrait({
@@ -26,6 +34,7 @@ export function setAccessControl(_c: ContractBuilder, access: Access): void {
       break;
     }
     case 'roles': {
+      // TODO: Uncomment when openzeppelin_stylus crate is available and stable
       // if (!c.traitExists('AccessControl')) {
       //   c.addUseClause('alloy_primitives', 'Address');
       //   c.addUseClause('openzeppelin_stylus::access::control', 'AccessControl');
@@ -51,6 +60,10 @@ export function setAccessControl(_c: ContractBuilder, access: Access): void {
  * Enables access control for the contract and restricts the given function with access control.
  *
  * If `caller` is provided, requires that the caller is the owner. Otherwise, requires that the owner is authorized.
+ * 
+ * ⚠️ WARNING: INCOMPLETE IMPLEMENTATION
+ * This function currently does not enforce any access control restrictions.
+ * All code is commented out pending availability of openzeppelin_stylus crate.
  */
 export function requireAccessControl(
   c: ContractBuilder,
@@ -67,11 +80,13 @@ export function requireAccessControl(
 
   switch (access) {
     case 'ownable': {
+      // TODO: Uncomment when openzeppelin_stylus crate is available
       // c.addFunctionCodeBefore(trait, fn, ['self.ownable.only_owner()?;']);
 
       break;
     }
     case 'roles': {
+      // TODO: Uncomment when openzeppelin_stylus crate is available
       //   const roleId = roleIdPrefix + '_ROLE';
       //   const addedConstant = c.addConstant({
       //     name: roleId,

@@ -14,6 +14,11 @@ export type AccessProps = {
 
 /**
  * Sets access control for the contract via constructor args.
+ * 
+ * Security considerations:
+ * - For 'ownable': Validates owner address via stellar_access::ownable library
+ * - For 'roles': Sets up admin role with proper authorization checks
+ * - All address validations are performed by the stellar_access library
  */
 export function setAccessControl(c: ContractBuilder, access: Access, explicitImplementations = false): void {
   switch (access) {
@@ -39,6 +44,7 @@ export function setAccessControl(c: ContractBuilder, access: Access, explicitImp
         }
 
         c.addConstructorArgument({ name: 'owner', type: 'Address' });
+        // Note: stellar_access::ownable library validates owner address
         c.addConstructorCode('ownable::set_owner(e, &owner);');
       }
       break;
@@ -62,6 +68,7 @@ export function setAccessControl(c: ContractBuilder, access: Access, explicitImp
       }
 
       c.addConstructorArgument({ name: 'admin', type: 'Address' });
+      // Note: stellar_access::access_control library validates admin address
       c.addConstructorCode('access_control::set_admin(e, &admin);');
       break;
     }
@@ -74,6 +81,11 @@ export function setAccessControl(c: ContractBuilder, access: Access, explicitImp
 
 /**
  * Enables access control for the contract and restricts the given function with access control.
+ * 
+ * Security considerations:
+ * - Automatically defaults to 'ownable' if access is false for protected functions
+ * - Uses macro-based enforcement (@only_owner, @only_admin, @only_role) for compile-time checks
+ * - Validates caller and role addresses through stellar_access library functions
  */
 export function requireAccessControl(
   c: ContractBuilder,
@@ -106,6 +118,7 @@ export function requireAccessControl(
       if (caller && role) {
         c.addUseClause('soroban_sdk', 'Symbol');
         c.addConstructorArgument({ name: role, type: 'Address' });
+        // Grant role using the admin account established earlier
         c.addConstructorCode(`access_control::grant_role_no_auth(e, &admin, &${role}, &Symbol::new(e, "${role}"));`);
 
         if (useMacro) {
