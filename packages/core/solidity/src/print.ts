@@ -16,6 +16,7 @@ import type { Lines } from './utils/format-lines';
 import { formatLines, spaceBetween } from './utils/format-lines';
 import { mapValues } from './utils/map-values';
 import SOLIDITY_VERSION from './solidity-version.json';
+import SOLIDITY_PRAGMA_VERSION from './solidity-pragma-version.json';
 import { inferTranspiled } from './infer-transpiled';
 import { compatibleContractsSemver } from './utils/version';
 import { stringifyUnicodeSafe } from './utils/sanitize';
@@ -33,7 +34,7 @@ export function printContract(contract: Contract, opts?: Options): string {
       [
         `// SPDX-License-Identifier: ${contract.license}`,
         printCompatibleLibraryVersions(contract, opts),
-        `pragma solidity ^${SOLIDITY_VERSION};`,
+        `pragma solidity ^${SOLIDITY_PRAGMA_VERSION};`,
       ],
 
       printImports(contract.imports, helpers),

@@ -33,7 +33,7 @@ test('remixURL encodes code param with special characters decodable by decodeBas
   // not a valid contract
   const contractSource = `// SPDX-License-Identifier: MIT
 // Compatible with OpenZeppelin Contracts ^5.4.0
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.2;
 
 import {AccountERC7579} from "@openzeppelin/contracts/account/extensions/draft-AccountERC7579.sol";
 import {ERC7739} from "@openzeppelin/contracts/utils/cryptography/signers/draft-ERC7739.sol";
