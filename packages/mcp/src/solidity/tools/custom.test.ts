@@ -41,6 +41,7 @@ test('all', async t => {
   const params: DeepRequired<z.infer<typeof t.context.schema>> = {
     name: 'MyCustom',
     pausable: true,
+    addressVerification: true,
     access: 'roles',
     upgradeable: 'uups',
     info: {
@@ -49,5 +50,22 @@ test('all', async t => {
     },
   };
   assertHasAllSupportedFields(t, params);
+  await assertAPIEquivalence(t, params, custom.print);
+});
+
+test('address verification', async t => {
+  const params: z.infer<typeof t.context.schema> = {
+    name: 'AddressVerifier',
+    addressVerification: true,
+  };
+  await assertAPIEquivalence(t, params, custom.print);
+});
+
+test('address verification with access control', async t => {
+  const params: z.infer<typeof t.context.schema> = {
+    name: 'ManagedVerifier',
+    addressVerification: true,
+    access: 'roles',
+  };
   await assertAPIEquivalence(t, params, custom.print);
 });

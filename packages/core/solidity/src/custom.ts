@@ -6,16 +6,19 @@ import { setUpgradeable } from './set-upgradeable';
 import { setInfo } from './set-info';
 import { setAccessControl } from './set-access-control';
 import { addPausable } from './add-pausable';
+import { addAddressVerification } from './add-address-verification';
 import { printContract } from './print';
 
 export interface CustomOptions extends CommonOptions {
   name: string;
   pausable?: boolean;
+  addressVerification?: boolean;
 }
 
 export const defaults: Required<CustomOptions> = {
   name: 'MyContract',
   pausable: false,
+  addressVerification: false,
   access: commonDefaults.access,
   upgradeable: commonDefaults.upgradeable,
   info: commonDefaults.info,
@@ -26,6 +29,7 @@ function withDefaults(opts: CustomOptions): Required<CustomOptions> {
     ...opts,
     ...withCommonDefaults(opts),
     pausable: opts.pausable ?? defaults.pausable,
+    addressVerification: opts.addressVerification ?? defaults.addressVerification,
   };
 }
 
@@ -46,6 +50,10 @@ export function buildCustom(opts: CustomOptions): Contract {
 
   if (allOpts.pausable) {
     addPausable(c, access, []);
+  }
+
+  if (allOpts.addressVerification) {
+    addAddressVerification(c, access);
   }
 
   setAccessControl(c, access);

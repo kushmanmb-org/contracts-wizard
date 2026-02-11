@@ -10,10 +10,11 @@ export function registerSolidityCustom(server: McpServer): RegisteredTool {
     'solidity-custom',
     makeDetailedPrompt(solidityPrompts.Custom),
     customSchema,
-    async ({ name, pausable, access, upgradeable, info }) => {
+    async ({ name, pausable, addressVerification, access, upgradeable, info }) => {
       const opts: CustomOptions = {
         name,
         pausable,
+        addressVerification,
         access,
         upgradeable,
         info,

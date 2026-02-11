@@ -180,5 +180,6 @@ export const governorSchema = {
 export const customSchema = {
   name: z.string().describe(commonDescriptions.name),
   pausable: z.boolean().optional().describe(commonDescriptions.pausable),
+  addressVerification: z.boolean().optional().describe('Enable address ownership verification using cryptographic signatures. Allows users to prove they control an address without exposing their private key.'),
   ...commonSchema,
 } as const satisfies z.ZodRawShape;
