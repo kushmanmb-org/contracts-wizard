@@ -7,7 +7,7 @@ export type Access = (typeof accessOptions)[number];
 
 /**
  * Sets access control for the contract by adding inheritance.
- * 
+ *
  * Security considerations:
  * - For 'ownable': Requires a valid initial owner address. Zero address is rejected by OpenZeppelin's Ownable.
  * - For 'roles': Requires a valid default admin address to prevent unmanageable contracts.
@@ -46,7 +46,9 @@ export function setAccessControl(c: ContractBuilder, access: Access) {
           name: 'initialAuthority',
         });
         // Add explicit validation as defense-in-depth
-        c.addConstructorCode('require(initialAuthority != address(0), "AccessManaged: initial authority is zero address");');
+        c.addConstructorCode(
+          'require(initialAuthority != address(0), "AccessManaged: initial authority is zero address");',
+        );
       }
       break;
     }
@@ -55,7 +57,7 @@ export function setAccessControl(c: ContractBuilder, access: Access) {
 
 /**
  * Enables access control for the contract and restricts the given function with access control.
- * 
+ *
  * Security considerations:
  * - Automatically defaults to 'ownable' if access is false for protected functions
  * - Validates role owner addresses when granting roles during construction

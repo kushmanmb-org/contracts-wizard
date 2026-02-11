@@ -7,11 +7,11 @@ export type Access = (typeof accessOptions)[number];
 
 /**
  * Sets access control for the contract via constructor args.
- * 
+ *
  * ⚠️ WARNING: INCOMPLETE IMPLEMENTATION
  * The Stylus access control implementation is currently non-functional.
  * All code below is commented out pending availability of openzeppelin_stylus crate.
- * 
+ *
  * TODO: Either implement proper access control or remove from UI options.
  * See: https://github.com/OpenZeppelin/rust-contracts-stylus
  */
@@ -60,7 +60,7 @@ export function setAccessControl(_c: ContractBuilder, access: Access): void {
  * Enables access control for the contract and restricts the given function with access control.
  *
  * If `caller` is provided, requires that the caller is the owner. Otherwise, requires that the owner is authorized.
- * 
+ *
  * ⚠️ WARNING: INCOMPLETE IMPLEMENTATION
  * This function currently does not enforce any access control restrictions.
  * All code is commented out pending availability of openzeppelin_stylus crate.

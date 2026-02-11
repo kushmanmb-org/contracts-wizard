@@ -82,7 +82,7 @@ const DEFAULT_ADMIN_DELAY_INCREASE_WAIT = BigInt(5 * 24 * 60 * 60); // 5 days
 const MAXIMUM_DEFAULT_ADMIN_TRANSFER_DELAY = BigInt(30 * 24 * 60 * 60); // 30 days
 
 /// Sets access control for the contract by adding inheritance.
-/// 
+///
 /// Security considerations:
 /// - For 'ownable': Validates owner address is not zero via OpenZeppelin's OwnableComponent
 /// - For 'roles': Validates default_admin address during role grant
@@ -235,7 +235,7 @@ export function setAccessControl(c: ContractBuilder, access: Access): void {
 
 /**
  * Enables access control for the contract and restricts the given function with access control.
- * 
+ *
  * Security considerations:
  * - Automatically defaults to 'ownable' if access is false for protected functions
  * - Role owners are validated by OpenZeppelin's AccessControl component

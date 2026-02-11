@@ -14,7 +14,7 @@ export type AccessProps = {
 
 /**
  * Sets access control for the contract via constructor args.
- * 
+ *
  * Security considerations:
  * - For 'ownable': Validates owner address via stellar_access::ownable library
  * - For 'roles': Sets up admin role with proper authorization checks
@@ -81,7 +81,7 @@ export function setAccessControl(c: ContractBuilder, access: Access, explicitImp
 
 /**
  * Enables access control for the contract and restricts the given function with access control.
- * 
+ *
  * Security considerations:
  * - Automatically defaults to 'ownable' if access is false for protected functions
  * - Uses macro-based enforcement (@only_owner, @only_admin, @only_role) for compile-time checks
