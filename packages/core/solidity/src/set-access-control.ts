@@ -7,6 +7,11 @@ export type Access = (typeof accessOptions)[number];
 
 /**
  * Sets access control for the contract by adding inheritance.
+ *
+ * Security considerations:
+ * - For 'ownable': Requires a valid initial owner address. Zero address is rejected by OpenZeppelin's Ownable.
+ * - For 'roles': Requires a valid default admin address to prevent unmanageable contracts.
+ * - For 'managed': Requires a valid initial authority address for the AccessManager pattern.
  */
 export function setAccessControl(c: ContractBuilder, access: Access) {
   switch (access) {
@@ -16,6 +21,8 @@ export function setAccessControl(c: ContractBuilder, access: Access) {
           type: 'address',
           name: 'initialOwner',
         });
+        // Add explicit validation as defense-in-depth
+        c.addConstructorCode('require(initialOwner != address(0), "Ownable: initial owner is zero address");');
       }
       break;
     }
@@ -25,6 +32,8 @@ export function setAccessControl(c: ContractBuilder, access: Access) {
           type: 'address',
           name: 'defaultAdmin',
         });
+        // Add explicit validation as defense-in-depth
+        c.addConstructorCode('require(defaultAdmin != address(0), "AccessControl: default admin is zero address");');
         c.addConstructorCode('_grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);');
       }
       c.addOverride(parents.AccessControl, supportsInterface);
@@ -36,6 +45,10 @@ export function setAccessControl(c: ContractBuilder, access: Access) {
           type: 'address',
           name: 'initialAuthority',
         });
+        // Add explicit validation as defense-in-depth
+        c.addConstructorCode(
+          'require(initialAuthority != address(0), "AccessManaged: initial authority is zero address");',
+        );
       }
       break;
     }
@@ -44,6 +57,11 @@ export function setAccessControl(c: ContractBuilder, access: Access) {
 
 /**
  * Enables access control for the contract and restricts the given function with access control.
+ *
+ * Security considerations:
+ * - Automatically defaults to 'ownable' if access is false for protected functions
+ * - Validates role owner addresses when granting roles during construction
+ * - Uses OpenZeppelin's audited access control modifiers
  */
 export function requireAccessControl(
   c: ContractBuilder,
@@ -70,6 +88,8 @@ export function requireAccessControl(
       );
       if (roleOwner && addedConstant) {
         c.addConstructorArgument({ type: 'address', name: roleOwner });
+        // Add validation for role owner address
+        c.addConstructorCode(`require(${roleOwner} != address(0), "AccessControl: role owner is zero address");`);
         c.addConstructorCode(`_grantRole(${roleId}, ${roleOwner});`);
       }
       c.addModifier(`onlyRole(${roleId})`, fn);

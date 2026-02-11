@@ -82,6 +82,11 @@ const DEFAULT_ADMIN_DELAY_INCREASE_WAIT = BigInt(5 * 24 * 60 * 60); // 5 days
 const MAXIMUM_DEFAULT_ADMIN_TRANSFER_DELAY = BigInt(30 * 24 * 60 * 60); // 30 days
 
 /// Sets access control for the contract by adding inheritance.
+///
+/// Security considerations:
+/// - For 'ownable': Validates owner address is not zero via OpenZeppelin's OwnableComponent
+/// - For 'roles': Validates default_admin address during role grant
+/// - For 'roles-dar': Validates initial_default_admin with delay-based admin transfer rules
 export function setAccessControl(c: ContractBuilder, access: Access): void {
   switch (access.type) {
     case false: {
@@ -91,6 +96,7 @@ export function setAccessControl(c: ContractBuilder, access: Access): void {
       c.addComponent(components.OwnableComponent, [{ lit: 'owner' }], true);
       c.addUseClause('starknet', 'ContractAddress');
       c.addConstructorArgument({ name: 'owner', type: 'ContractAddress' });
+      // Note: OpenZeppelin's OwnableComponent validates owner is not zero address
       break;
     }
     case 'roles': {
